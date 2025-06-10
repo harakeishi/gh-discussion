@@ -43,7 +43,7 @@ func newSearchCmd() *cobra.Command {
 				to = &t
 			}
 
-			query := buildSearchQuery(from, to, user, keywords)
+			query := buildSearchQuery(from, to, user, repo, keywords)
 			results, err := searchDiscussions(query)
 			if err != nil {
 				return err
@@ -62,7 +62,7 @@ func newSearchCmd() *cobra.Command {
 	return cmd
 }
 
-func buildSearchQuery(from, to *time.Time, user string, keywords []string) string {
+func buildSearchQuery(from, to *time.Time, user, repo string, keywords []string) string {
 	var parts []string
 	if from != nil {
 		parts = append(parts, fmt.Sprintf("created:%s..", from.Format("2006-01-02")))
@@ -78,6 +78,9 @@ func buildSearchQuery(from, to *time.Time, user string, keywords []string) strin
 	}
 	if user != "" {
 		parts = append(parts, "author:"+user)
+	}
+	if repo != "" {
+		parts = append(parts, "repo:"+repo)
 	}
 	for _, kw := range keywords {
 		parts = append(parts, kw)
