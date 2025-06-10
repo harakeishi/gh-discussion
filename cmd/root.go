@@ -1,24 +1,27 @@
 package main
 
 import (
-    "os"
-    "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
+	"os"
 )
 
-func newRootCmd() *cobra.Command {
-    cmd := &cobra.Command{
-        Use:   "gh-discussion",
-        Short: "Interact with GitHub Discussions",
-    }
+var repo string
 
-    cmd.AddCommand(newSearchCmd())
-    cmd.AddCommand(newViewCmd())
-    return cmd
+func newRootCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "gh-discussion",
+		Short: "Interact with GitHub Discussions",
+	}
+
+	cmd.PersistentFlags().StringVar(&repo, "repo", "", "target repository (owner/repo)")
+
+	cmd.AddCommand(newSearchCmd())
+	cmd.AddCommand(newViewCmd())
+	return cmd
 }
 
 func main() {
-    if err := newRootCmd().Execute(); err != nil {
-        os.Exit(1)
-    }
+	if err := newRootCmd().Execute(); err != nil {
+		os.Exit(1)
+	}
 }
-

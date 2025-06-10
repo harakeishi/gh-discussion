@@ -10,7 +10,7 @@ gh extension install harakeishi/gh-discussion
 ## Usage
 - Search discussions:
 ```
-gh discussion search --from 2023-01-01 --to 2023-01-31 --keyword bug
+gh discussion search --repo owner/repo --from 2023-01-01 --to 2023-01-31 --keyword bug
 ```
 - View discussion:
 ```

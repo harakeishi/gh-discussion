@@ -8,7 +8,8 @@
    - `gh extension create gh-discussion` を利用して拡張ディレクトリを生成。
    - 言語は Go を使用（`gh` 本体との親和性が高い）。
 2. **検索コマンド (search)**
-   - オプション: `--from`, `--to`, `--user`, `--keyword` (複数指定可)。
+   - オプション: `--from`, `--to`, `--user`, `--keyword`, `--repo` (複数指定可)。
+   - `--repo` で検索対象のリポジトリを `owner/repo` 形式で指定可能。
    - 入力された条件をもとに検索クエリを組み立てて GitHub GraphQL API の `search` を利用。
    - 取得項目: タイトル、URL、作成者、作成日時、コメント数などを一覧で表示。
 3. **内容取得コマンド (view)**
