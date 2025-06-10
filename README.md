@@ -3,9 +3,17 @@
 `gh-discussion` is a GitHub CLI extension to search and view GitHub Discussions.
 
 ## Installation
-```
+```bash
 gh extension install harakeishi/gh-discussion
 ```
+
+Users on GitHub Enterprise should specify the full repository path including
+the host:
+```bash
+gh extension install github.com/harakeishi/gh-discussion
+```
+
+The extension builds automatically via the included `gh-discussion` script.
 
 ## Usage
 - Search discussions:
