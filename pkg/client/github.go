@@ -27,7 +27,8 @@ func NewGitHubClient() (*GitHubClient, error) {
 
 // ListDiscussions retrieves a list of discussions based on the provided options
 func (c *GitHubClient) ListDiscussions(opts models.ListOptions) (*models.DiscussionConnection, error) {
-	if opts.Search != "" {
+	// Use search API if search term or author filter is specified
+	if opts.Search != "" || opts.Author != "" {
 		return c.searchDiscussions(opts)
 	}
 	return c.listRepositoryDiscussions(opts)
@@ -36,9 +37,9 @@ func (c *GitHubClient) ListDiscussions(opts models.ListOptions) (*models.Discuss
 // listRepositoryDiscussions lists discussions in a specific repository
 func (c *GitHubClient) listRepositoryDiscussions(opts models.ListOptions) (*models.DiscussionConnection, error) {
 	query := `
-		query ListDiscussions($owner: String!, $repo: String!, $first: Int!, $after: String, $orderBy: DiscussionOrder, $categoryId: ID, $filterBy: DiscussionFilters) {
+		query ListDiscussions($owner: String!, $repo: String!, $first: Int!, $after: String, $orderBy: DiscussionOrder, $categoryId: ID, $answered: Boolean) {
 			repository(owner: $owner, name: $repo) {
-				discussions(first: $first, after: $after, orderBy: $orderBy, categoryId: $categoryId, filterBy: $filterBy) {
+				discussions(first: $first, after: $after, orderBy: $orderBy, categoryId: $categoryId, answered: $answered) {
 					pageInfo {
 						hasNextPage
 						endCursor
@@ -60,7 +61,6 @@ func (c *GitHubClient) listRepositoryDiscussions(opts models.ListOptions) (*mode
 						url
 						answerChosenAt
 						isAnswered
-						upvoteCount
 						comments(first: 0) {
 							totalCount
 						}
@@ -91,20 +91,20 @@ func (c *GitHubClient) listRepositoryDiscussions(opts models.ListOptions) (*mode
 		"direction": "DESC",
 	}
 
-	// Add filters if specified
-	if opts.Author != "" || opts.Answered != nil {
-		filterBy := make(map[string]interface{})
-		if opts.Author != "" {
-			filterBy["author"] = opts.Author
+	// Add answered filter if specified
+	if opts.Answered != nil {
+		variables["answered"] = *opts.Answered
+	}
+
+	// Add category filter if specified
+	if opts.Category != "" {
+		categoryID, err := c.getCategoryID(opts.Owner, opts.Repo, opts.Category)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get category ID: %w", err)
 		}
-		if opts.Answered != nil {
-			if *opts.Answered {
-				filterBy["answered"] = true
-			} else {
-				filterBy["unanswered"] = true
-			}
+		if categoryID != "" {
+			variables["categoryId"] = categoryID
 		}
-		variables["filterBy"] = filterBy
 	}
 
 	var response struct {
@@ -151,7 +151,6 @@ func (c *GitHubClient) searchDiscussions(opts models.ListOptions) (*models.Discu
 						url
 						answerChosenAt
 						isAnswered
-						upvoteCount
 						comments(first: 0) {
 							totalCount
 						}
@@ -453,4 +452,20 @@ func (c *GitHubClient) GetDiscussionCategories(owner, repo string) ([]models.Cat
 	}
 
 	return response.Repository.DiscussionCategories.Nodes, nil
+}
+
+// getCategoryID retrieves the ID of a discussion category by name
+func (c *GitHubClient) getCategoryID(owner, repo, categoryName string) (string, error) {
+	categories, err := c.GetDiscussionCategories(owner, repo)
+	if err != nil {
+		return "", err
+	}
+
+	for _, category := range categories {
+		if category.Name == categoryName {
+			return category.ID, nil
+		}
+	}
+
+	return "", nil // Category not found, but not an error
 }

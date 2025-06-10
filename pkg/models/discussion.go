@@ -25,7 +25,6 @@ type Discussion struct {
 	AnswerChosenBy      *User              `json:"answerChosenBy"`
 	Answer              *Comment           `json:"answer"`
 	IsAnswered          bool               `json:"isAnswered"`
-	UpvoteCount         int                `json:"upvoteCount"`
 	Comments            *CommentConnection `json:"comments"`
 	Labels              *LabelConnection   `json:"labels"`
 	ReactionGroups      []ReactionGroup    `json:"reactionGroups"`
@@ -85,7 +84,6 @@ type Comment struct {
 	PublishedAt             *time.Time         `json:"publishedAt"`
 	Author                  *User              `json:"author"`
 	AuthorAssociation       string             `json:"authorAssociation"`
-	UpvoteCount             int                `json:"upvoteCount"`
 	IsAnswer                bool               `json:"isAnswer"`
 	IsMinimized             bool               `json:"isMinimized"`
 	MinimizedReason         *string            `json:"minimizedReason"`
