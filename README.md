@@ -10,6 +10,17 @@ A GitHub CLI extension for managing discussions, providing functionality similar
 - **Multiple output formats**: table, JSON, custom templates
 - **GitHub CLI integration**: uses your existing GitHub authentication
 
+## Demo
+
+### Listing discussions
+![List discussions](img/list.png)
+
+### Viewing discussion details
+![View discussion](img/view.png)
+
+### Viewing discussion with comments
+![View discussion with comments](img/view-with-comment.png)
+
 ## Installation
 
 ### Prerequisites
@@ -59,14 +70,8 @@ gh discussion list --answered false
 # Limit results
 gh discussion list -L 50
 
-# Output as JSON
-gh discussion list --json
-
 # Output specific fields as JSON
 gh discussion list --json "number,title,author,category,isAnswered"
-
-# Use custom template
-gh discussion list --template '{{range .}}{{.number}} {{.title}} by {{.author.login}}{{"\n"}}{{end}}'
 
 # Open in web browser
 gh discussion list -w
@@ -87,30 +92,13 @@ gh discussion view https://github.com/owner/repo/discussions/123
 # Include comments
 gh discussion view 123 -c
 
-# Output as JSON
-gh discussion view 123 --json
 
 # Output specific fields
 gh discussion view 123 --json "title,body,author,comments"
 
-# Use custom template
-gh discussion view 123 --template '{{.title}} by {{.author.login}} in {{.category.name}}'
 
 # Open in web browser
 gh discussion view 123 -w
-```
-
-### Create discussions
-
-```bash
-# Create discussion (opens web browser)
-gh discussion create
-
-# Create in specific repository
-gh discussion create -R owner/repo
-
-# Open creation form in web browser
-gh discussion create -w
 ```
 
 ## Available JSON Fields
@@ -148,18 +136,6 @@ gh discussion create -w
 
 ```bash
 gh discussion list --category "Q&A" --answered false --json "number,title,author,createdAt"
-```
-
-### View discussion with all comments as JSON
-
-```bash
-gh discussion view 123 -c --json
-```
-
-### Search for discussions about API
-
-```bash
-gh discussion list -S "API" --template '{{range .}}#{{.number}}: {{.title}} ({{.category.name}}){{"\n"}}{{end}}'
 ```
 
 ### List recent discussions by a specific author
