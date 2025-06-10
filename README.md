@@ -7,13 +7,15 @@
 gh extension install harakeishi/gh-discussion
 ```
 
-Users on GitHub Enterprise should specify the full repository path including
+Users on GitHub Enterprise should specify the full repository URL including
 the host:
 ```bash
-gh extension install github.com/harakeishi/gh-discussion
+gh extension install https://github.com/harakeishi/gh-discussion
 ```
 
 The extension builds automatically via the included `gh-discussion` script.
+This repository follows the manual extension layout described in the
+[official GitHub CLI documentation](https://docs.github.com/ja/github-cli/github-cli/creating-github-cli-extensions#creating-an-interpreted-extension-manually).
 
 ## Usage
 - Search discussions:

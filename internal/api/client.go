@@ -1,7 +1,7 @@
 package api
 
 import (
-    "context"
+	"context"
 )
 
 // Client abstracts GitHub API interactions
@@ -10,17 +10,17 @@ import (
 type Client struct{}
 
 func NewClient() *Client {
-    return &Client{}
+	return &Client{}
 }
 
 func (c *Client) SearchDiscussions(ctx context.Context, query string) ([]Discussion, error) {
-    // TODO: implement actual GraphQL query
-    return nil, nil
+	// TODO: implement actual GraphQL query
+	return nil, nil
 }
 
 func (c *Client) GetDiscussion(ctx context.Context, idOrURL string) (DiscussionDetail, error) {
-    // TODO: implement actual GraphQL query
-    return DiscussionDetail{}, nil
+	// TODO: implement actual GraphQL query
+	return DiscussionDetail{}, nil
 }
 
 // Reuse types from main package
