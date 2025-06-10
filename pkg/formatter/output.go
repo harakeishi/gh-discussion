@@ -233,21 +233,41 @@ func (f *Formatter) formatDiscussionTable(discussion *models.Discussion) error {
 	if discussion.Comments != nil && len(discussion.Comments.Nodes) > 0 {
 		fmt.Fprintf(f.writer, "\n--- Comments ---\n")
 		for i, comment := range discussion.Comments.Nodes {
-			fmt.Fprintf(f.writer, "\nComment #%d", i+1)
-			if comment.IsAnswer {
-				fmt.Fprintf(f.writer, " (Answer)")
-			}
-			fmt.Fprintf(f.writer, "\n")
-
-			if comment.Author != nil {
-				fmt.Fprintf(f.writer, "Author: %s\n", comment.Author.Login)
-			}
-			fmt.Fprintf(f.writer, "Created: %s\n", f.formatTime(comment.CreatedAt))
-			fmt.Fprintf(f.writer, "\n%s\n", comment.Body)
+			f.formatComment(comment, i+1, 0)
 		}
 	}
 
 	return nil
+}
+
+// formatComment formats a single comment with its replies
+func (f *Formatter) formatComment(comment models.Comment, number int, depth int) {
+	indent := strings.Repeat("  ", depth)
+
+	fmt.Fprintf(f.writer, "\n%sComment #%d", indent, number)
+	if comment.IsAnswer {
+		fmt.Fprintf(f.writer, " (Answer)")
+	}
+	fmt.Fprintf(f.writer, "\n")
+
+	if comment.Author != nil {
+		fmt.Fprintf(f.writer, "%sAuthor: %s\n", indent, comment.Author.Login)
+	}
+	fmt.Fprintf(f.writer, "%sCreated: %s\n", indent, f.formatTime(comment.CreatedAt))
+
+	// Format the comment body with proper indentation
+	bodyLines := strings.Split(comment.Body, "\n")
+	fmt.Fprintf(f.writer, "\n")
+	for _, line := range bodyLines {
+		fmt.Fprintf(f.writer, "%s%s\n", indent, line)
+	}
+
+	// Show replies if available
+	if comment.Replies != nil && len(comment.Replies.Nodes) > 0 {
+		for i, reply := range comment.Replies.Nodes {
+			f.formatComment(reply, i+1, depth+1)
+		}
+	}
 }
 
 // formatDiscussionListJSON formats discussions as JSON

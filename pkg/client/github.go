@@ -366,6 +366,28 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 							url
 							viewerCanMarkAsAnswer
 							viewerCanUnmarkAsAnswer
+							replies(first: 50) {
+								totalCount
+								nodes {
+									id
+									body
+									bodyText
+									createdAt
+									updatedAt
+									author {
+										login
+										url
+										avatarUrl
+										... on User {
+											name
+											email
+										}
+									}
+									authorAssociation
+									isAnswer
+									url
+								}
+							}
 						}
 					}
 				}
