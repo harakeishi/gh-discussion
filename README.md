@@ -4,7 +4,7 @@
 
 ## Installation
 ```
-gh extension install <repo>
+gh extension install harakeishi/gh-discussion
 ```
 
 ## Usage
