@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+DIR="$(dirname "$0")"
+go build -o "$DIR/gh-discussion-bin" ./cmd
+exec "$DIR/gh-discussion-bin" "$@"
