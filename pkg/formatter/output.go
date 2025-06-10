@@ -169,8 +169,8 @@ func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) e
 		Bold(true).
 		Foreground(lipgloss.Color("15"))
 	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
+		Foreground(lipgloss.NoColor{}).
+		Background(lipgloss.NoColor{}).
 		Bold(false)
 	s.Cell = s.Cell.
 		Padding(0, 1).
