@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"git.pepabo.com/harachan/gh-discussion/cmd"
+	"github.com/harakeishi/gh-discussion/cmd"
 )
 
 func main() {

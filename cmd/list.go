@@ -8,9 +8,9 @@ import (
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/spf13/cobra"
 
-	"git.pepabo.com/harachan/gh-discussion/pkg/client"
-	"git.pepabo.com/harachan/gh-discussion/pkg/formatter"
-	"git.pepabo.com/harachan/gh-discussion/pkg/models"
+	"github.com/harakeishi/gh-discussion/pkg/client"
+	"github.com/harakeishi/gh-discussion/pkg/formatter"
+	"github.com/harakeishi/gh-discussion/pkg/models"
 )
 
 // listOptions holds the options for the list command

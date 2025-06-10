@@ -9,10 +9,10 @@ import (
 	"text/template"
 	"time"
 
-	"git.pepabo.com/harachan/gh-discussion/pkg/models"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/harakeishi/gh-discussion/pkg/models"
 )
 
 // OutputFormat represents the output format type

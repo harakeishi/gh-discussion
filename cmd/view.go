@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"git.pepabo.com/harachan/gh-discussion/pkg/client"
-	"git.pepabo.com/harachan/gh-discussion/pkg/formatter"
-	"git.pepabo.com/harachan/gh-discussion/pkg/models"
+	"github.com/harakeishi/gh-discussion/pkg/client"
+	"github.com/harakeishi/gh-discussion/pkg/formatter"
+	"github.com/harakeishi/gh-discussion/pkg/models"
 )
 
 // viewOptions holds the options for the view command

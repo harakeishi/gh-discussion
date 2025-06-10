@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.pepabo.com/harachan/gh-discussion/pkg/models"
 	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/harakeishi/gh-discussion/pkg/models"
 )
 
 // GitHubClient wraps the GitHub GraphQL API client
