@@ -267,14 +267,20 @@ gh discussion list --category "General"
 gh discussion list --answered
 gh discussion list --unanswered
 
-# ラベルでフィルタ
-gh discussion list -l "bug" -l "help wanted"
-
 # 表示件数制限
 gh discussion list -L 50
 
-# JSON出力
+# JSON出力（特定フィールドのみ）
+gh discussion list --json "number,title,author,category,isAnswered,createdAt,updatedAt,url"
+
+# JSON出力（全フィールド）
 gh discussion list --json
+
+# JQフィルタ適用
+gh discussion list --jq '.[] | select(.isAnswered == false)'
+
+# テンプレート出力
+gh discussion list --template '{{range .}}{{.number}} {{.title}} by {{.author.login}}{{"\n"}}{{end}}'
 
 # ブラウザで開く
 gh discussion list -w
@@ -297,8 +303,17 @@ gh discussion view 123 -R owner/repo
 # コメントも表示
 gh discussion view 123 -c
 
-# JSON出力
+# JSON出力（特定フィールドのみ）
+gh discussion view 123 --json "title,body,author,category,comments,isAnswered,createdAt"
+
+# JSON出力（全フィールド）
 gh discussion view 123 --json
+
+# JQフィルタ適用
+gh discussion view 123 --jq '.comments[] | select(.isAnswer == true)'
+
+# テンプレート出力
+gh discussion view 123 --template '{{.title}} by {{.author.login}} in {{.category.name}}'
 
 # ブラウザで開く
 gh discussion view 123 -w
@@ -314,6 +329,52 @@ gh discussion create --title "Discussion Title" --body "Discussion body"
 
 # カテゴリ指定
 gh discussion create --category "General"
+```
+
+## JSON FIELDS
+
+### listコマンド用JSON出力フィールド
+```
+activeLockReason, answer, answerChosenAt, answerChosenBy, author, authorAssociation,
+body, bodyHTML, bodyText, category, comments, createdAt, createdViaEmail, databaseId,
+editor, id, includesCreatedEdit, isAnswered, lastEditedAt, locked, number, 
+publishedAt, reactionGroups, reactions, repository, resourcePath, title, updatedAt,
+url, userContentEdits, viewerCanDelete, viewerCanReact, viewerCanSubscribe,
+viewerCanUpdate, viewerDidAuthor, viewerSubscription
+```
+
+### viewコマンド用JSON出力フィールド
+```
+activeLockReason, answer, answerChosenAt, answerChosenBy, author, authorAssociation,
+body, bodyHTML, bodyText, category, comments, createdAt, createdViaEmail, databaseId,
+editor, id, includesCreatedEdit, isAnswered, lastEditedAt, locked, number, 
+publishedAt, reactionGroups, reactions, repository, resourcePath, title, updatedAt,
+url, userContentEdits, viewerCanDelete, viewerCanReact, viewerCanSubscribe,
+viewerCanUpdate, viewerDidAuthor, viewerSubscription
+```
+
+### ネストされたオブジェクトのフィールド
+
+#### author, answerChosenBy, editor
+```
+avatarUrl, login, url, id, name, email
+```
+
+#### category
+```
+id, name, description, emoji, emojiHTML, isAnswerable, createdAt, updatedAt
+```
+
+#### comments
+```
+author, authorAssociation, body, bodyHTML, bodyText, createdAt, id, isAnswer,
+isMinimized, minimizedReason, publishedAt, reactionGroups, replies, replyTo,
+updatedAt, url, viewerCanMarkAsAnswer, viewerCanUnmarkAsAnswer
+```
+
+#### repository
+```
+id, name, nameWithOwner, owner, url, description
 ```
 
 ## エラーハンドリング
