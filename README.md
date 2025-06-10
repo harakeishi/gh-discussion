@@ -2,6 +2,8 @@
 
 A GitHub CLI extension for managing discussions, providing functionality similar to `gh issue` and `gh pr` for GitHub Discussions.
 
+English | [日本語](README_ja.md)
+
 ## Features
 
 - **List discussions** with filtering and search capabilities
