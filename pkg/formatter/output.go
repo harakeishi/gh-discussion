@@ -80,7 +80,7 @@ func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) e
 	defer w.Flush()
 
 	// Header
-	fmt.Fprintln(w, "NUMBER\tTITLE\tAUTHOR\tCATEGORY\tANSWERED\tCOMMENTS\tUPVOTES\tUPDATED")
+	fmt.Fprintln(w, "NUMBER\tTITLE\tAUTHOR\tCATEGORY\tANSWERED\tCOMMENTS\tUPDATED")
 
 	for _, discussion := range discussions {
 		author := ""
@@ -103,17 +103,15 @@ func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) e
 			comments = strconv.Itoa(discussion.Comments.TotalCount)
 		}
 
-		upvotes := strconv.Itoa(discussion.UpvoteCount)
 		updated := f.formatTime(discussion.UpdatedAt)
 
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			discussion.Number,
 			f.truncateString(discussion.Title, 50),
 			author,
 			category,
 			answered,
 			comments,
-			upvotes,
 			updated,
 		)
 	}
@@ -141,7 +139,6 @@ func (f *Formatter) formatDiscussionTable(discussion *models.Discussion) error {
 	fmt.Fprintf(f.writer, "Created: %s\n", f.formatTime(discussion.CreatedAt))
 	fmt.Fprintf(f.writer, "Updated: %s\n", f.formatTime(discussion.UpdatedAt))
 	fmt.Fprintf(f.writer, "Answered: %t\n", discussion.IsAnswered)
-	fmt.Fprintf(f.writer, "Upvotes: %d\n", discussion.UpvoteCount)
 
 	if discussion.Comments != nil {
 		fmt.Fprintf(f.writer, "Comments: %d\n", discussion.Comments.TotalCount)
@@ -175,7 +172,6 @@ func (f *Formatter) formatDiscussionTable(discussion *models.Discussion) error {
 				fmt.Fprintf(f.writer, "Author: %s\n", comment.Author.Login)
 			}
 			fmt.Fprintf(f.writer, "Created: %s\n", f.formatTime(comment.CreatedAt))
-			fmt.Fprintf(f.writer, "Upvotes: %d\n", comment.UpvoteCount)
 			fmt.Fprintf(f.writer, "\n%s\n", comment.Body)
 		}
 	}
