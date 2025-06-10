@@ -5,18 +5,30 @@ GitHub CLI拡張として、GitHubディスカッションの検索と内容取�
 
 ## 機能要件
 
-### 1. ディスカッション検索機能
-- **リポジトリ指定（必須）**: `-r, --repo` オプション
-- **期間指定（オプション）**: `--created-after`, `--created-before`, `--updated-after`, `--updated-before`
-- **ユーザー指定（オプション）**: `--author`, `--commenter`
-- **キーワード検索（オプション）**: `--query`
-- **カテゴリ指定（オプション）**: `--category`
+### サブコマンド構造（gh issue/pr に準拠）
+
+#### GENERAL COMMANDS
+- **list**: ディスカッション一覧表示（`gh issue list`に相当）
+- **view**: 特定ディスカッションの詳細表示（`gh issue view`に相当）
+- **create**: 新しいディスカッション作成（`gh issue create`に相当）
+
+#### TARGETED COMMANDS（将来実装）
+- **comment**: ディスカッションにコメント追加
+- **edit**: ディスカッション編集
+- **close**: ディスカッション終了
+- **reopen**: ディスカッション再開
+- **lock/unlock**: ディスカッション会話のロック/ロック解除
+
+### 1. ディスカッション一覧機能（list）
+- **基本フィルタ**: `-a, --author`, `-S, --search`, `-l, --label`
+- **ディスカッション固有フィルタ**: `--category`, `--answered`, `--unanswered`
+- **共通オプション**: `-L, --limit`, `--json`, `-w, --web`
 - **出力形式**: デフォルトはテーブル形式、`--json`で JSON 出力
 
-### 2. ディスカッション内容取得機能
-- **ディスカッション ID 指定**: `--discussion-id`
-- **詳細情報取得**: タイトル、本文、コメント、作成者情報など
-- **出力形式**: デフォルトは読みやすい形式、`--json`で JSON 出力
+### 2. ディスカッション詳細表示機能（view）
+- **識別子**: ディスカッション番号またはURL
+- **詳細表示**: `-c, --comments`でコメント表示
+- **出力形式**: `--json`, `-w, --web`オプション対応
 
 ## 技術スタック
 
@@ -31,8 +43,10 @@ GitHub CLI拡張として、GitHubディスカッションの検索と内容取�
 gh-discussion/
 ├── main.go                 # エントリーポイント
 ├── cmd/
-│   ├── search.go          # 検索コマンド実装
-│   └── get.go             # 取得コマンド実装
+│   ├── list.go            # ディスカッション一覧コマンド実装
+│   ├── view.go            # ディスカッション詳細表示コマンド実装
+│   ├── create.go          # ディスカッション作成コマンド実装
+│   └── comment.go         # コメント追加コマンド実装（将来実装）
 ├── pkg/
 │   ├── client/
 │   │   └── github.go      # GraphQL クライアント
@@ -65,12 +79,12 @@ gh-discussion/
 2. GraphQL レスポンスのマッピング
 3. 検索条件の構造体定義
 
-### Phase 4: 検索機能実装
-1. 検索クエリビルダーの実装
-2. 検索条件のバリデーション
+### Phase 4: list機能実装
+1. ディスカッション一覧取得の実装
+2. フィルタ条件のバリデーション
 3. 検索結果の取得と処理
 
-### Phase 5: 内容取得機能実装
+### Phase 5: view機能実装
 1. 特定ディスカッション取得の実装
 2. コメント情報の取得
 3. 詳細情報の整形
@@ -92,7 +106,50 @@ gh-discussion/
 
 ## API 仕様
 
-### 検索機能の GraphQL クエリ例
+### list機能の GraphQL クエリ例
+
+```graphql
+query ListDiscussions($owner: String!, $repo: String!, $first: Int!, $after: String, $orderBy: DiscussionOrder, $filterBy: DiscussionOrderField) {
+  repository(owner: $owner, name: $repo) {
+    discussions(first: $first, after: $after, orderBy: $orderBy, filterBy: $filterBy) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        number
+        title
+        bodyText
+        createdAt
+        updatedAt
+        author {
+          login
+          url
+        }
+        category {
+          name
+        }
+        url
+        answerChosenAt
+        isAnswered
+        upvoteCount
+        comments(first: 0) {
+          totalCount
+        }
+        labels(first: 10) {
+          nodes {
+            name
+            color
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 検索機能の GraphQL クエリ例（search使用）
 
 ```graphql
 query SearchDiscussions($query: String!, $first: Int!, $after: String) {
@@ -132,7 +189,7 @@ query SearchDiscussions($query: String!, $first: Int!, $after: String) {
 }
 ```
 
-### 内容取得の GraphQL クエリ例
+### view機能の GraphQL クエリ例
 
 ```graphql
 query GetDiscussion($owner: String!, $repo: String!, $number: Int!) {
@@ -189,34 +246,74 @@ query GetDiscussion($owner: String!, $repo: String!, $number: Int!) {
 
 ## コマンド仕様
 
-### 検索コマンド
+### listコマンド（gh issue list準拠）
 ```bash
-# 基本的な検索
-gh discussion search -r owner/repo
+# 基本的な一覧表示
+gh discussion list
 
-# 期間指定検索
-gh discussion search -r owner/repo --created-after 2024-01-01 --created-before 2024-12-31
+# リポジトリ指定
+gh discussion list -R owner/repo
 
-# ユーザー指定検索
-gh discussion search -r owner/repo --author username
+# 作成者でフィルタ
+gh discussion list -a username
 
-# キーワード検索
-gh discussion search -r owner/repo --query "API documentation"
+# 検索クエリでフィルタ
+gh discussion list -S "API documentation"
 
-# 複合条件検索
-gh discussion search -r owner/repo --author username --category "General" --query "bug"
+# カテゴリでフィルタ
+gh discussion list --category "General"
 
-# JSON 出力
-gh discussion search -r owner/repo --json
+# 回答済み/未回答でフィルタ
+gh discussion list --answered
+gh discussion list --unanswered
+
+# ラベルでフィルタ
+gh discussion list -l "bug" -l "help wanted"
+
+# 表示件数制限
+gh discussion list -L 50
+
+# JSON出力
+gh discussion list --json
+
+# ブラウザで開く
+gh discussion list -w
+
+# 複合条件
+gh discussion list -a username --category "General" -S "bug" --answered
 ```
 
-### 内容取得コマンド
+### viewコマンド（gh issue view準拠）
 ```bash
-# 特定ディスカッションの取得
-gh discussion get -r owner/repo --discussion-id 123
+# 番号で表示
+gh discussion view 123
 
-# JSON 出力
-gh discussion get -r owner/repo --discussion-id 123 --json
+# URLで表示
+gh discussion view https://github.com/owner/repo/discussions/123
+
+# リポジトリ指定
+gh discussion view 123 -R owner/repo
+
+# コメントも表示
+gh discussion view 123 -c
+
+# JSON出力
+gh discussion view 123 --json
+
+# ブラウザで開く
+gh discussion view 123 -w
+```
+
+### createコマンド（将来実装、gh issue create準拠）
+```bash
+# インタラクティブ作成
+gh discussion create
+
+# タイトルと本文指定
+gh discussion create --title "Discussion Title" --body "Discussion body"
+
+# カテゴリ指定
+gh discussion create --category "General"
 ```
 
 ## エラーハンドリング
@@ -240,10 +337,11 @@ module github.com/harakeishi/gh-discussion
 go 1.21
 
 require (
-	github.com/cli/go-gh v1.2.1
-	github.com/spf13/cobra v1.8.0
-	github.com/olekukonko/tablewriter v0.0.5
-	github.com/fatih/color v1.16.0
+	github.com/cli/go-gh v1.2.1           // GitHub CLI 統合
+	github.com/spf13/cobra v1.8.0          // CLI フレームワーク  
+	github.com/cli/safeexec v1.0.1         // 安全なコマンド実行
+	github.com/MakeNowJust/heredoc v1.0.0  // ヒアドキュメント
+	github.com/briandowns/spinner v1.23.0  // スピナー表示
 )
 ```
 
