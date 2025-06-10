@@ -116,7 +116,9 @@ type LabelConnection struct {
 // ReactionGroup represents a group of reactions
 type ReactionGroup struct {
 	Content string `json:"content"`
-	Count   int    `json:"count"`
+	Users   struct {
+		TotalCount int `json:"totalCount"`
+	} `json:"users"`
 }
 
 // PageInfo represents pagination information

@@ -252,8 +252,10 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 						login
 						url
 						avatarUrl
-						name
-						email
+						... on User {
+							name
+							email
+						}
 					}
 					category {
 						name
@@ -281,6 +283,10 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 					answerChosenBy {
 						login
 						url
+						... on User {
+							name
+							email
+						}
 					}
 					answer {
 						id
@@ -290,6 +296,10 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 						author {
 							login
 							url
+							... on User {
+								name
+								email
+							}
 						}
 						isAnswer
 					}
@@ -297,7 +307,9 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 					upvoteCount
 					reactionGroups {
 						content
-						count
+						users {
+							totalCount
+						}
 					}
 					viewerCanDelete
 					viewerCanReact
@@ -311,6 +323,10 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 					editor {
 						login
 						url
+						... on User {
+							name
+							email
+						}
 					}
 					includesCreatedEdit
 					comments(first: 100) @include(if: $includeComments) {
@@ -331,6 +347,10 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 								login
 								url
 								avatarUrl
+								... on User {
+									name
+									email
+								}
 							}
 							authorAssociation
 							upvoteCount
@@ -339,11 +359,35 @@ func (c *GitHubClient) GetDiscussion(opts models.ViewOptions) (*models.Discussio
 							minimizedReason
 							reactionGroups {
 								content
-								count
+								users {
+									totalCount
+								}
 							}
 							url
 							viewerCanMarkAsAnswer
 							viewerCanUnmarkAsAnswer
+							replies(first: 50) {
+								totalCount
+								nodes {
+									id
+									body
+									bodyText
+									createdAt
+									updatedAt
+									author {
+										login
+										url
+										avatarUrl
+										... on User {
+											name
+											email
+										}
+									}
+									authorAssociation
+									isAnswer
+									url
+								}
+							}
 						}
 					}
 				}

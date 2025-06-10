@@ -192,62 +192,159 @@ func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) e
 
 // formatDiscussionTable formats a single discussion as a table
 func (f *Formatter) formatDiscussionTable(discussion *models.Discussion) error {
-	fmt.Fprintf(f.writer, "Discussion #%d\n", discussion.Number)
-	fmt.Fprintf(f.writer, "Title: %s\n", discussion.Title)
+	// Title styling
+	titleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Bold(true)
 
+	// Label styling for metadata
+	labelStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("12")).
+		Bold(true)
+
+	// Value styling for metadata
+	valueStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("252"))
+
+	// URL styling
+	urlStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Italic(true)
+
+	// Answer styling
+	answerStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("10")).
+		Bold(true)
+
+	// Section separator
+	separator := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Render("─────────────────────────────────────────────────────────────────────────")
+
+	// Title
+	fmt.Fprintf(f.writer, "%s\n", titleStyle.Render(fmt.Sprintf("Discussion #%d", discussion.Number)))
+	fmt.Fprintf(f.writer, "%s\n\n", titleStyle.Render(discussion.Title))
+
+	// Metadata
 	if discussion.Author != nil {
-		fmt.Fprintf(f.writer, "Author: %s\n", discussion.Author.Login)
+		fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Author:"), valueStyle.Render(discussion.Author.Login))
 	}
 
 	if discussion.Category != nil {
-		fmt.Fprintf(f.writer, "Category: %s\n", discussion.Category.Name)
+		fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Category:"), valueStyle.Render(discussion.Category.Name))
 	}
 
 	if discussion.Repository != nil {
-		fmt.Fprintf(f.writer, "Repository: %s\n", discussion.Repository.NameWithOwner)
+		fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Repository:"), valueStyle.Render(discussion.Repository.NameWithOwner))
 	}
 
-	fmt.Fprintf(f.writer, "Created: %s\n", f.formatTime(discussion.CreatedAt))
-	fmt.Fprintf(f.writer, "Updated: %s\n", f.formatTime(discussion.UpdatedAt))
-	fmt.Fprintf(f.writer, "Answered: %t\n", discussion.IsAnswered)
+	fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Created:"), valueStyle.Render(f.formatTime(discussion.CreatedAt)))
+	fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Updated:"), valueStyle.Render(f.formatTime(discussion.UpdatedAt)))
+
+	fmt.Fprintf(f.writer, "%s ", labelStyle.Render("Answered:"))
+	if discussion.IsAnswered {
+		fmt.Fprintf(f.writer, "%s\n", answerStyle.Render("Yes"))
+	} else {
+		fmt.Fprintf(f.writer, "%s\n", valueStyle.Render("No"))
+	}
 
 	if discussion.Comments != nil {
-		fmt.Fprintf(f.writer, "Comments: %d\n", discussion.Comments.TotalCount)
+		fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Comments:"), valueStyle.Render(strconv.Itoa(discussion.Comments.TotalCount)))
 	}
 
-	fmt.Fprintf(f.writer, "URL: %s\n", discussion.URL)
+	fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("URL:"), urlStyle.Render(discussion.URL))
 
 	if discussion.Labels != nil && len(discussion.Labels.Nodes) > 0 {
 		labels := make([]string, len(discussion.Labels.Nodes))
 		for i, label := range discussion.Labels.Nodes {
 			labels[i] = label.Name
 		}
-		fmt.Fprintf(f.writer, "Labels: %s\n", strings.Join(labels, ", "))
+		fmt.Fprintf(f.writer, "%s %s\n", labelStyle.Render("Labels:"), valueStyle.Render(strings.Join(labels, ", ")))
 	}
 
+	// Body section
 	if discussion.Body != "" {
+		fmt.Fprintf(f.writer, "\n%s\n", separator)
 		fmt.Fprintf(f.writer, "\n%s\n", discussion.Body)
 	}
 
-	// Show comments if available
+	// Comments section
 	if discussion.Comments != nil && len(discussion.Comments.Nodes) > 0 {
-		fmt.Fprintf(f.writer, "\n--- Comments ---\n")
-		for i, comment := range discussion.Comments.Nodes {
-			fmt.Fprintf(f.writer, "\nComment #%d", i+1)
-			if comment.IsAnswer {
-				fmt.Fprintf(f.writer, " (Answer)")
-			}
-			fmt.Fprintf(f.writer, "\n")
+		commentsHeaderStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("15")).
+			Bold(true)
 
-			if comment.Author != nil {
-				fmt.Fprintf(f.writer, "Author: %s\n", comment.Author.Login)
-			}
-			fmt.Fprintf(f.writer, "Created: %s\n", f.formatTime(comment.CreatedAt))
-			fmt.Fprintf(f.writer, "\n%s\n", comment.Body)
+		fmt.Fprintf(f.writer, "\n%s\n", separator)
+		fmt.Fprintf(f.writer, "\n%s\n", commentsHeaderStyle.Render("Comments"))
+
+		for i, comment := range discussion.Comments.Nodes {
+			f.formatComment(comment, i+1, 0)
 		}
 	}
 
 	return nil
+}
+
+// formatComment formats a single comment with its replies
+func (f *Formatter) formatComment(comment models.Comment, number int, depth int) {
+	indent := strings.Repeat("  ", depth)
+
+	// Comment header styling
+	commentHeaderStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Bold(true)
+
+	// Author styling
+	authorStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("12")).
+		Bold(true)
+
+	// Time styling
+	timeStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240"))
+
+	// Answer badge styling
+	answerBadgeStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Background(lipgloss.Color("10")).
+		Padding(0, 1).
+		Bold(true)
+
+	// Comment separator for depth > 0
+	if depth > 0 {
+		commentSeparator := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")).
+			Render("┌─")
+		fmt.Fprintf(f.writer, "\n%s%s\n", indent, commentSeparator)
+	} else {
+		fmt.Fprintf(f.writer, "\n")
+	}
+
+	fmt.Fprintf(f.writer, "%s%s", indent, commentHeaderStyle.Render(fmt.Sprintf("Comment #%d", number)))
+	if comment.IsAnswer {
+		fmt.Fprintf(f.writer, " %s", answerBadgeStyle.Render("Answer"))
+	}
+	fmt.Fprintf(f.writer, "\n")
+
+	if comment.Author != nil {
+		fmt.Fprintf(f.writer, "%s%s • %s\n", indent, authorStyle.Render(comment.Author.Login), timeStyle.Render(f.formatTime(comment.CreatedAt)))
+	} else {
+		fmt.Fprintf(f.writer, "%s%s\n", indent, timeStyle.Render(f.formatTime(comment.CreatedAt)))
+	}
+
+	// Format the comment body with proper indentation
+	bodyLines := strings.Split(comment.Body, "\n")
+	fmt.Fprintf(f.writer, "\n")
+	for _, line := range bodyLines {
+		fmt.Fprintf(f.writer, "%s%s\n", indent, line)
+	}
+
+	// Show replies if available
+	if comment.Replies != nil && len(comment.Replies.Nodes) > 0 {
+		for i, reply := range comment.Replies.Nodes {
+			f.formatComment(reply, i+1, depth+1)
+		}
+	}
 }
 
 // formatDiscussionListJSON formats discussions as JSON
