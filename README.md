@@ -8,7 +8,6 @@ English | [日本語](README_ja.md)
 
 - **List discussions** with filtering and search capabilities
 - **View discussion details** with optional comments
-- **Create discussions** (web browser integration)
 - **Multiple output formats**: table, JSON, custom templates
 - **GitHub CLI integration**: uses your existing GitHub authentication
 
