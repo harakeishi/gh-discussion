@@ -6,11 +6,13 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 	"text/template"
 	"time"
 
 	"git.pepabo.com/harachan/gh-discussion/pkg/models"
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // OutputFormat represents the output format type
@@ -69,6 +71,30 @@ func (f *Formatter) FormatDiscussion(discussion *models.Discussion) error {
 	}
 }
 
+// tableModel represents the bubbletea table model
+type tableModel struct {
+	table table.Model
+}
+
+func (m tableModel) Init() tea.Cmd { return nil }
+
+func (m tableModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "ctrl+c", "esc":
+			return m, tea.Quit
+		}
+	}
+	m.table, cmd = m.table.Update(msg)
+	return m, cmd
+}
+
+func (m tableModel) View() string {
+	return m.table.View() + "\n"
+}
+
 // formatDiscussionListTable formats discussions as a table
 func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) error {
 	if len(discussions) == 0 {
@@ -76,12 +102,19 @@ func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) e
 		return nil
 	}
 
-	w := tabwriter.NewWriter(f.writer, 0, 0, 2, ' ', 0)
-	defer w.Flush()
+	// Define table columns
+	columns := []table.Column{
+		{Title: "NUMBER", Width: 8},
+		{Title: "TITLE", Width: 60},
+		{Title: "AUTHOR", Width: 15},
+		{Title: "CATEGORY", Width: 15},
+		{Title: "ANSWERED", Width: 10},
+		{Title: "COMMENTS", Width: 10},
+		{Title: "UPDATED", Width: 15},
+	}
 
-	// Header
-	fmt.Fprintln(w, "NUMBER\tTITLE\tAUTHOR\tCATEGORY\tANSWERED\tCOMMENTS\tUPDATED")
-
+	// Prepare table rows
+	var rows []table.Row
 	for _, discussion := range discussions {
 		author := ""
 		if discussion.Author != nil {
@@ -105,16 +138,54 @@ func (f *Formatter) formatDiscussionListTable(discussions []models.Discussion) e
 
 		updated := f.formatTime(discussion.UpdatedAt)
 
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			discussion.Number,
-			f.truncateString(discussion.Title, 50),
-			author,
-			category,
+		rows = append(rows, table.Row{
+			strconv.Itoa(discussion.Number),
+			f.truncateString(discussion.Title, 60),
+			f.truncateString(author, 15),
+			f.truncateString(category, 15),
 			answered,
 			comments,
 			updated,
-		)
+		})
 	}
+
+	// Create table
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(len(rows)+2),
+	)
+
+	// Apply styles
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		BorderTop(false).
+		BorderLeft(false).
+		BorderRight(false).
+		Bold(true).
+		Foreground(lipgloss.Color("15"))
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+	s.Cell = s.Cell.
+		Padding(0, 1).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderTop(false).
+		BorderBottom(false).
+		BorderLeft(false).
+		BorderRight(false)
+	t.SetStyles(s)
+
+	// Create model and run
+	m := tableModel{table: t}
+
+	// For non-interactive output, just render the table view
+	fmt.Fprint(f.writer, m.View())
 
 	return nil
 }
@@ -286,12 +357,16 @@ func (f *Formatter) formatTime(t time.Time) string {
 	}
 }
 
-// truncateString truncates a string to the specified length
+// truncateString truncates a string to the specified length, handling Unicode properly
 func (f *Formatter) truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
 		return s
 	}
-	return s[:maxLen-3] + "..."
+	if maxLen <= 3 {
+		return "..."
+	}
+	return string(runes[:maxLen-3]) + "..."
 }
 
 // GetAvailableFields returns the available fields for JSON output
